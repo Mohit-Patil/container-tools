@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  ai-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-cli-tools:latest
+    container_name: ai-cli-tools
+
+    # Interactive TTY for CLI tools
+    stdin_open: true
+    tty: true
+
+    # Volumes
+    volumes:
+      # Mount current directory as workspace
+      - .:/workspace
+      # Named volume for persistent config and auth
+      - ai-cli-config:/home/devuser/.config
+      # Optional: Mount git config from host (uncomment if needed)
+      # - ~/.gitconfig:/home/devuser/.gitconfig:ro
+      # Optional: Mount SSH keys (uncomment if needed)
+      # - ~/.ssh:/home/devuser/.ssh:ro
+
+    # Environment variables
+    environment:
+      - TERM=xterm-256color
+      - HOST_PWD=${PWD}
+
+    # Load environment from file (if exists)
+    env_file:
+      - path: .env
+        required: false
+
+    # Working directory
+    working_dir: /workspace
+
+    # Default command
+    command: /bin/bash
+
+volumes:
+  ai-cli-config:
+    name: ai-cli-config

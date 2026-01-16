@@ -1,0 +1,55 @@
+# =============================================================================
+# Docker Build Context Exclusions
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation (not needed in image)
+*.md
+!README.md
+
+# Backup files
+*.bak
+*.backup
+ai-cli-config-backup.tar.gz
+
+# Node modules (if any local development)
+node_modules
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+dist/
+build/
+
+# Test files
+tests/
+test/

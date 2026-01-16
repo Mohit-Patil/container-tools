@@ -1,0 +1,39 @@
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Backup files
+*.bak
+*.backup
+ai-cli-config-backup.tar.gz
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node modules (if any local development)
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+dist/
+build/
