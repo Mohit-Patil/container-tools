@@ -1,0 +1,30 @@
+#!/bin/bash
+# =============================================================================
+# AI CLI Tools Container Launcher
+# Run from any directory to start the container with that directory mounted
+# =============================================================================
+
+set -e
+
+IMAGE_NAME="ai-cli-tools:latest"
+CONTAINER_NAME="ai-cli-tools"
+CONFIG_VOLUME="ai-cli-config"
+
+# Use current directory as workspace
+WORKSPACE_DIR="${1:-$(pwd)}"
+
+# Check if image exists
+if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
+    echo "Error: Docker image '$IMAGE_NAME' not found."
+    echo "Please build it first: make build (from container-tools directory)"
+    exit 1
+fi
+
+# Run the container
+exec docker run -it --rm \
+    --name "$CONTAINER_NAME" \
+    -v "$WORKSPACE_DIR":/workspace \
+    -v "$CONFIG_VOLUME":/home/devuser/.config \
+    -e TERM=xterm-256color \
+    -e HOST_PWD="$WORKSPACE_DIR" \
+    "$IMAGE_NAME"

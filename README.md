@@ -108,6 +108,25 @@ docker-compose exec ai-tools bash
 docker-compose down
 ```
 
+### Global Command (Run from Any Directory)
+
+Install the `ai-container` command to launch the container from any project folder:
+
+```bash
+# Create symlink (one-time setup)
+sudo ln -s /path/to/container-tools/bin/ai-container /usr/local/bin/ai-container
+```
+
+Then use it from anywhere:
+
+```bash
+cd /path/to/any/project
+ai-container
+
+# Or specify a directory explicitly
+ai-container /path/to/project
+```
+
 ### Using Docker Directly
 
 ```bash
@@ -189,6 +208,8 @@ container-tools/
 ├── .env.example            # Environment variable template
 ├── .dockerignore           # Build context exclusions
 ├── README.md               # This file
+├── bin/
+│   └── ai-container       # Standalone launcher script
 ├── scripts/
 │   ├── entrypoint.sh      # Container entrypoint
 │   ├── aliases.sh         # Tool aliases and helpers
