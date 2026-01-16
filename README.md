@@ -134,18 +134,65 @@ ai-container /path/to/project
 docker run -it --rm \
   -v $(pwd):/workspace \
   -v ai-cli-config:/home/devuser/.config \
+  -v ai-cli-claude:/home/devuser/.claude \
+  -v ai-cli-codex:/home/devuser/.codex \
+  -v ai-cli-aider:/home/devuser/.aider \
   ai-cli-tools:latest
 
 # Run with specific directory
 docker run -it --rm \
   -v /path/to/your/code:/workspace \
   -v ai-cli-config:/home/devuser/.config \
+  -v ai-cli-claude:/home/devuser/.claude \
+  -v ai-cli-codex:/home/devuser/.codex \
+  -v ai-cli-aider:/home/devuser/.aider \
   ai-cli-tools:latest
 ```
 
 ## Persistent Authentication
 
-Authentication tokens are stored in a Docker named volume (`ai-cli-config`) that persists between container runs. You only need to authenticate once per tool.
+Authentication tokens are stored in Docker named volumes that persist between container runs. You only need to authenticate once per tool, and credentials are shared across all projects.
+
+### How It Works
+
+Different AI tools store credentials in different locations. We use separate named volumes for each:
+
+| Volume | Container Path | Tools |
+|--------|----------------|-------|
+| `ai-cli-config` | `~/.config` | GitHub CLI, Gemini, Amazon Q |
+| `ai-cli-claude` | `~/.claude` | Claude Code |
+| `ai-cli-codex` | `~/.codex` | OpenAI Codex |
+| `ai-cli-aider` | `~/.aider` | Aider |
+
+### Credentials Shared Across Projects
+
+Since volumes are managed by Docker (not tied to any project folder), your credentials work everywhere:
+
+```
+Project A (/Users/you/app1)     ─┐
+Project B (/Users/you/app2)      ├──► Same volumes ──► Same credentials
+Project C (/Users/you/backend)  ─┘
+```
+
+**Example:**
+```bash
+# First time - login once
+cd ~/projects/app1
+ai-container
+claude   # Login via OAuth
+# Exit
+
+# Later - different project, already authenticated
+cd ~/work/backend
+ai-container
+claude   # Already logged in!
+```
+
+### View Volumes
+
+```bash
+docker volume ls | grep ai-cli
+```
 
 ### Backup and Restore
 

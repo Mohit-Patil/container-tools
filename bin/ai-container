@@ -8,7 +8,12 @@ set -e
 
 IMAGE_NAME="ai-cli-tools:latest"
 CONTAINER_NAME="ai-cli-tools"
+
+# Volumes for persistent auth (different tools use different locations)
 CONFIG_VOLUME="ai-cli-config"
+CLAUDE_VOLUME="ai-cli-claude"
+CODEX_VOLUME="ai-cli-codex"
+AIDER_VOLUME="ai-cli-aider"
 
 # Use current directory as workspace
 WORKSPACE_DIR="${1:-$(pwd)}"
@@ -20,11 +25,14 @@ if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
     exit 1
 fi
 
-# Run the container
+# Run the container with all auth volumes mounted
 exec docker run -it --rm \
     --name "$CONTAINER_NAME" \
     -v "$WORKSPACE_DIR":/workspace \
     -v "$CONFIG_VOLUME":/home/devuser/.config \
+    -v "$CLAUDE_VOLUME":/home/devuser/.claude \
+    -v "$CODEX_VOLUME":/home/devuser/.codex \
+    -v "$AIDER_VOLUME":/home/devuser/.aider \
     -e TERM=xterm-256color \
     -e HOST_PWD="$WORKSPACE_DIR" \
     "$IMAGE_NAME"

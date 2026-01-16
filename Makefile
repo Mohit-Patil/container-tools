@@ -9,7 +9,12 @@
 IMAGE_NAME := ai-cli-tools
 CONTAINER_NAME := ai-cli-tools
 WORKSPACE_DIR ?= $(shell pwd)
+
+# Volumes for persistent auth/config (different tools use different locations)
 CONFIG_VOLUME := ai-cli-config
+CLAUDE_VOLUME := ai-cli-claude
+CODEX_VOLUME := ai-cli-codex
+AIDER_VOLUME := ai-cli-aider
 
 # Default target
 .DEFAULT_GOAL := help
@@ -36,6 +41,9 @@ run:
 		--name $(CONTAINER_NAME) \
 		-v "$(WORKSPACE_DIR)":/workspace \
 		-v $(CONFIG_VOLUME):/home/devuser/.config \
+		-v $(CLAUDE_VOLUME):/home/devuser/.claude \
+		-v $(CODEX_VOLUME):/home/devuser/.codex \
+		-v $(AIDER_VOLUME):/home/devuser/.aider \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		$(IMAGE_NAME):latest
@@ -46,6 +54,9 @@ run-detached:
 		--name $(CONTAINER_NAME) \
 		-v "$(WORKSPACE_DIR)":/workspace \
 		-v $(CONFIG_VOLUME):/home/devuser/.config \
+		-v $(CLAUDE_VOLUME):/home/devuser/.claude \
+		-v $(CODEX_VOLUME):/home/devuser/.codex \
+		-v $(AIDER_VOLUME):/home/devuser/.aider \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		$(IMAGE_NAME):latest \
@@ -66,6 +77,9 @@ run-with-env:
 		--name $(CONTAINER_NAME) \
 		-v "$(WORKSPACE_DIR)":/workspace \
 		-v $(CONFIG_VOLUME):/home/devuser/.config \
+		-v $(CLAUDE_VOLUME):/home/devuser/.claude \
+		-v $(CODEX_VOLUME):/home/devuser/.codex \
+		-v $(AIDER_VOLUME):/home/devuser/.aider \
 		--env-file .env \
 		-e TERM=xterm-256color \
 		$(IMAGE_NAME):latest
@@ -77,6 +91,9 @@ run-host-network:
 		--network host \
 		-v "$(WORKSPACE_DIR)":/workspace \
 		-v $(CONFIG_VOLUME):/home/devuser/.config \
+		-v $(CLAUDE_VOLUME):/home/devuser/.claude \
+		-v $(CODEX_VOLUME):/home/devuser/.codex \
+		-v $(AIDER_VOLUME):/home/devuser/.aider \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		$(IMAGE_NAME):latest
@@ -109,11 +126,11 @@ clean: stop
 clean-image:
 	@docker rmi $(IMAGE_NAME):latest 2>/dev/null || true
 
-## clean-volume: Remove the config volume (WARNING: deletes auth data)
+## clean-volume: Remove all config volumes (WARNING: deletes auth data)
 clean-volume:
 	@echo "WARNING: This will delete all saved authentication data!"
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] && \
-		docker volume rm $(CONFIG_VOLUME) 2>/dev/null || echo "Aborted or volume not found"
+		(docker volume rm $(CONFIG_VOLUME) $(CLAUDE_VOLUME) $(CODEX_VOLUME) $(AIDER_VOLUME) 2>/dev/null || true) || echo "Aborted"
 
 ## clean-all: Remove container, image, and volumes
 clean-all: clean clean-image

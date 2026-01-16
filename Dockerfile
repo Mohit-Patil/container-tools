@@ -177,7 +177,14 @@ RUN chmod +x /home/${USERNAME}/entrypoint.sh \
 # =============================================================================
 # Volume mount points
 # =============================================================================
-VOLUME ["/workspace", "/home/devuser/.config"]
+# Mount points for code and persistent auth/config data
+# Different tools store credentials in different locations:
+#   - Claude Code: ~/.claude/
+#   - Codex: ~/.codex/
+#   - GitHub CLI: ~/.config/gh/
+#   - Aider: ~/.aider/ or ~/.config/aider/
+#   - Amazon Q: ~/.config/amazon-q/
+VOLUME ["/workspace", "/home/devuser/.claude", "/home/devuser/.codex", "/home/devuser/.config", "/home/devuser/.aider"]
 
 # Working directory
 WORKDIR /workspace
