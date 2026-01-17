@@ -142,9 +142,9 @@ RUN ARCH=$(dpkg --print-architecture) \
     fi || true
 
 # Give devuser ownership of global npm packages and binaries so tools can self-update
-# Also set ownership of /usr (parent) for npm global installs to work properly
+# Note: Don't chown /usr/bin/sudo or it breaks sudo functionality
 RUN chown -R ${USER_UID}:${USER_GID} /usr/lib/node_modules \
-    && chown -R ${USER_UID}:${USER_GID} /usr/bin \
+    && find /usr/bin -maxdepth 1 ! -name sudo -exec chown ${USER_UID}:${USER_GID} {} \; \
     && chown ${USER_UID}:${USER_GID} /usr
 
 # =============================================================================

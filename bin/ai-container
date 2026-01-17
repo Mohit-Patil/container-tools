@@ -18,9 +18,11 @@ AIDER_VOLUME="ai-cli-aider"
 # Use current directory as workspace
 WORKSPACE_DIR="${1:-$(pwd)}"
 
-# Generate container name from project directory name
-PROJECT_NAME=$(basename "$WORKSPACE_DIR" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
-CONTAINER_NAME="ai-tools-${PROJECT_NAME}"
+# Generate container name and workspace path from project directory name
+PROJECT_NAME=$(basename "$WORKSPACE_DIR")
+PROJECT_NAME_SANITIZED=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
+CONTAINER_NAME="ai-tools-${PROJECT_NAME_SANITIZED}"
+CONTAINER_WORKSPACE="/home/devuser/${PROJECT_NAME}"
 
 # Check if image exists
 if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
@@ -45,16 +47,22 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
 else
     # Container doesn't exist - create it
     echo "Creating new container: $CONTAINER_NAME"
+    echo "Workspace: $CONTAINER_WORKSPACE"
+    # Create tmp subdirectory in claude volume with correct ownership (uid 1000 = devuser)
+    docker run --rm -v "$CLAUDE_VOLUME":/vol alpine sh -c "mkdir -p /vol/.tmp && chown 1000:1000 /vol/.tmp" 2>/dev/null || true
+
     docker run -d \
         --name "$CONTAINER_NAME" \
-        -v "$WORKSPACE_DIR":/workspace \
+        -v "$WORKSPACE_DIR":"$CONTAINER_WORKSPACE" \
         -v "$CONFIG_VOLUME":/home/devuser/.config \
         -v "$CLAUDE_VOLUME":/home/devuser/.claude \
         -v "$CODEX_VOLUME":/home/devuser/.codex \
         -v "$AIDER_VOLUME":/home/devuser/.aider \
+        -w "$CONTAINER_WORKSPACE" \
         -e TERM=xterm-256color \
         -e HOST_PWD="$WORKSPACE_DIR" \
         -e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
+        -e TMPDIR=/home/devuser/.claude/.tmp \
         "$IMAGE_NAME" \
         tail -f /dev/null >/dev/null
 
