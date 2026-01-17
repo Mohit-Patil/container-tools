@@ -141,6 +141,12 @@ RUN ARCH=$(dpkg --print-architecture) \
         echo "Amazon Q: No ARM64 binary available, skipping"; \
     fi || true
 
+# Give devuser ownership of global npm packages and binaries so tools can self-update
+# Also set ownership of /usr (parent) for npm global installs to work properly
+RUN chown -R ${USER_UID}:${USER_GID} /usr/lib/node_modules \
+    && chown -R ${USER_UID}:${USER_GID} /usr/bin \
+    && chown ${USER_UID}:${USER_GID} /usr
+
 # =============================================================================
 # Layer 7: User configuration and setup
 # =============================================================================

@@ -46,6 +46,7 @@ run:
 		-v $(AIDER_VOLUME):/home/devuser/.aider \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
+		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
 		$(IMAGE_NAME):latest
 
 ## run-detached: Start container in detached mode
@@ -59,6 +60,7 @@ run-detached:
 		-v $(AIDER_VOLUME):/home/devuser/.aider \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
+		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
 		$(IMAGE_NAME):latest \
 		tail -f /dev/null
 
@@ -82,6 +84,7 @@ run-with-env:
 		-v $(AIDER_VOLUME):/home/devuser/.aider \
 		--env-file .env \
 		-e TERM=xterm-256color \
+		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
 		$(IMAGE_NAME):latest
 
 ## run-host-network: Run with host network (for OAuth callbacks)
@@ -96,6 +99,7 @@ run-host-network:
 		-v $(AIDER_VOLUME):/home/devuser/.aider \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
+		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
 		$(IMAGE_NAME):latest
 
 # =============================================================================
@@ -149,6 +153,7 @@ dev:
 		-v "$(WORKSPACE_DIR)":/workspace \
 		-v $(CONFIG_VOLUME):/home/devuser/.config \
 		-e TERM=xterm-256color \
+		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
 		$(IMAGE_NAME):latest
 
 ## exec: Execute a command in the running container (usage: make exec CMD="your command")

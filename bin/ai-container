@@ -35,4 +35,5 @@ exec docker run -it --rm \
     -v "$AIDER_VOLUME":/home/devuser/.aider \
     -e TERM=xterm-256color \
     -e HOST_PWD="$WORKSPACE_DIR" \
+    -e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
     "$IMAGE_NAME"

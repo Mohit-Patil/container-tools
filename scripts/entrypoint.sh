@@ -7,7 +7,13 @@ set -e
 
 # Fix ownership of mounted volumes if running as devuser
 if [ "$(id -u)" = "1000" ]; then
-    # Ensure .config directory exists and has correct permissions
+    # Fix ownership of mounted volumes (they may be owned by root initially)
+    sudo chown -R devuser:devuser /home/devuser/.config 2>/dev/null || true
+    sudo chown -R devuser:devuser /home/devuser/.claude 2>/dev/null || true
+    sudo chown -R devuser:devuser /home/devuser/.codex 2>/dev/null || true
+    sudo chown -R devuser:devuser /home/devuser/.aider 2>/dev/null || true
+
+    # Ensure directories exist with correct permissions
     mkdir -p /home/devuser/.config
     mkdir -p /home/devuser/.claude
     mkdir -p /home/devuser/.codex
