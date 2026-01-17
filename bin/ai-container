@@ -2,12 +2,12 @@
 # =============================================================================
 # AI CLI Tools Container Launcher
 # Run from any directory to start the container with that directory mounted
+# Creates one persistent container per project directory
 # =============================================================================
 
 set -e
 
 IMAGE_NAME="ai-cli-tools:latest"
-CONTAINER_NAME="ai-cli-tools"
 
 # Volumes for persistent auth (different tools use different locations)
 CONFIG_VOLUME="ai-cli-config"
@@ -18,6 +18,10 @@ AIDER_VOLUME="ai-cli-aider"
 # Use current directory as workspace
 WORKSPACE_DIR="${1:-$(pwd)}"
 
+# Generate container name from project directory name
+PROJECT_NAME=$(basename "$WORKSPACE_DIR" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
+CONTAINER_NAME="ai-tools-${PROJECT_NAME}"
+
 # Check if image exists
 if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
     echo "Error: Docker image '$IMAGE_NAME' not found."
@@ -25,15 +29,34 @@ if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
     exit 1
 fi
 
-# Run the container with all auth volumes mounted
-exec docker run -it --rm \
-    --name "$CONTAINER_NAME" \
-    -v "$WORKSPACE_DIR":/workspace \
-    -v "$CONFIG_VOLUME":/home/devuser/.config \
-    -v "$CLAUDE_VOLUME":/home/devuser/.claude \
-    -v "$CODEX_VOLUME":/home/devuser/.codex \
-    -v "$AIDER_VOLUME":/home/devuser/.aider \
-    -e TERM=xterm-256color \
-    -e HOST_PWD="$WORKSPACE_DIR" \
-    -e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
-    "$IMAGE_NAME"
+# Check if container exists
+if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    # Container exists - check if it's running
+    if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+        # Container is running - attach to it
+        echo "Attaching to running container: $CONTAINER_NAME"
+        exec docker exec -it "$CONTAINER_NAME" /bin/bash
+    else
+        # Container exists but stopped - start and attach
+        echo "Starting existing container: $CONTAINER_NAME"
+        docker start "$CONTAINER_NAME" >/dev/null
+        exec docker exec -it "$CONTAINER_NAME" /bin/bash
+    fi
+else
+    # Container doesn't exist - create it
+    echo "Creating new container: $CONTAINER_NAME"
+    docker run -d \
+        --name "$CONTAINER_NAME" \
+        -v "$WORKSPACE_DIR":/workspace \
+        -v "$CONFIG_VOLUME":/home/devuser/.config \
+        -v "$CLAUDE_VOLUME":/home/devuser/.claude \
+        -v "$CODEX_VOLUME":/home/devuser/.codex \
+        -v "$AIDER_VOLUME":/home/devuser/.aider \
+        -e TERM=xterm-256color \
+        -e HOST_PWD="$WORKSPACE_DIR" \
+        -e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
+        "$IMAGE_NAME" \
+        tail -f /dev/null >/dev/null
+
+    exec docker exec -it "$CONTAINER_NAME" /bin/bash
+fi
