@@ -112,7 +112,7 @@ RUN userdel -r ubuntu 2>/dev/null || true \
 # =============================================================================
 
 # --- Claude Code (Anthropic) ---
-RUN npm install -g @anthropic-ai/claude-code || echo "Claude Code installation skipped (may not be available)"
+RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Claude Code installation skipped (install script failed)"
 
 # --- OpenAI Codex CLI ---
 RUN npm install -g @openai/codex || echo "Codex installation skipped (may not be available)"
