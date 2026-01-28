@@ -44,6 +44,8 @@ run:
 		-v $(CLAUDE_VOLUME):/home/devuser/.claude \
 		-v $(CODEX_VOLUME):/home/devuser/.codex \
 		-v $(AIDER_VOLUME):/home/devuser/.aider \
+		-v "$$HOME/.gitconfig":/home/devuser/.gitconfig:ro \
+		-v "$$HOME/.ssh":/home/devuser/.ssh:ro \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
@@ -58,6 +60,8 @@ run-detached:
 		-v $(CLAUDE_VOLUME):/home/devuser/.claude \
 		-v $(CODEX_VOLUME):/home/devuser/.codex \
 		-v $(AIDER_VOLUME):/home/devuser/.aider \
+		-v "$$HOME/.gitconfig":/home/devuser/.gitconfig:ro \
+		-v "$$HOME/.ssh":/home/devuser/.ssh:ro \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
@@ -82,6 +86,8 @@ run-with-env:
 		-v $(CLAUDE_VOLUME):/home/devuser/.claude \
 		-v $(CODEX_VOLUME):/home/devuser/.codex \
 		-v $(AIDER_VOLUME):/home/devuser/.aider \
+		-v "$$HOME/.gitconfig":/home/devuser/.gitconfig:ro \
+		-v "$$HOME/.ssh":/home/devuser/.ssh:ro \
 		--env-file .env \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
@@ -97,6 +103,8 @@ run-host-network:
 		-v $(CLAUDE_VOLUME):/home/devuser/.claude \
 		-v $(CODEX_VOLUME):/home/devuser/.codex \
 		-v $(AIDER_VOLUME):/home/devuser/.aider \
+		-v "$$HOME/.gitconfig":/home/devuser/.gitconfig:ro \
+		-v "$$HOME/.ssh":/home/devuser/.ssh:ro \
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
@@ -152,6 +160,8 @@ dev:
 		--network host \
 		-v "$(WORKSPACE_DIR)":/workspace \
 		-v $(CONFIG_VOLUME):/home/devuser/.config \
+		-v "$$HOME/.gitconfig":/home/devuser/.gitconfig:ro \
+		-v "$$HOME/.ssh":/home/devuser/.ssh:ro \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
 		$(IMAGE_NAME):latest

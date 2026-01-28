@@ -21,10 +21,9 @@ services:
       - ai-cli-claude:/home/devuser/.claude
       - ai-cli-codex:/home/devuser/.codex
       - ai-cli-aider:/home/devuser/.aider
-      # Optional: Mount git config from host (uncomment if needed)
-      # - ~/.gitconfig:/home/devuser/.gitconfig:ro
-      # Optional: Mount SSH keys (uncomment if needed)
-      # - ~/.ssh:/home/devuser/.ssh:ro
+      # Mount git config and SSH keys from host
+      - ~/.gitconfig:/home/devuser/.gitconfig:ro
+      - ~/.ssh:/home/devuser/.ssh:ro
 
     # Environment variables
     environment:

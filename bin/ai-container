@@ -58,6 +58,8 @@ else
         -v "$CLAUDE_VOLUME":/home/devuser/.claude \
         -v "$CODEX_VOLUME":/home/devuser/.codex \
         -v "$AIDER_VOLUME":/home/devuser/.aider \
+        -v "$HOME/.gitconfig":/home/devuser/.gitconfig:ro \
+        -v "$HOME/.ssh":/home/devuser/.ssh:ro \
         -w "$CONTAINER_WORKSPACE" \
         -e TERM=xterm-256color \
         -e HOST_PWD="$WORKSPACE_DIR" \

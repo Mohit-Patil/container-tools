@@ -141,6 +141,8 @@ docker run -it --rm \
   -v ai-cli-claude:/home/devuser/.claude \
   -v ai-cli-codex:/home/devuser/.codex \
   -v ai-cli-aider:/home/devuser/.aider \
+  -v ~/.gitconfig:/home/devuser/.gitconfig:ro \
+  -v ~/.ssh:/home/devuser/.ssh:ro \
   ai-cli-tools:latest
 
 # Run with specific directory
@@ -150,6 +152,8 @@ docker run -it --rm \
   -v ai-cli-claude:/home/devuser/.claude \
   -v ai-cli-codex:/home/devuser/.codex \
   -v ai-cli-aider:/home/devuser/.aider \
+  -v ~/.gitconfig:/home/devuser/.gitconfig:ro \
+  -v ~/.ssh:/home/devuser/.ssh:ro \
   ai-cli-tools:latest
 ```
 
@@ -216,6 +220,22 @@ make restore-config
 # Remove all saved authentication (requires confirmation)
 make clean-volume
 ```
+
+## Git and SSH Configuration
+
+The container automatically mounts your host's Git configuration and SSH keys (read-only) to enable seamless git operations and SSH-based authentication:
+
+**Mounted files:**
+- `~/.gitconfig` → Container's `~/.gitconfig` (read-only)
+- `~/.ssh/` → Container's `~/.ssh/` (read-only)
+
+**What this enables:**
+- Git commits use your name and email from host
+- SSH keys work for git operations (GitHub, GitLab, etc.)
+- No need to configure git identity inside container
+- SSH agent forwarding works automatically
+
+**Note:** SSH keys are mounted read-only for security. If you need to generate new keys, do it on your host machine.
 
 ## Helper Commands (Inside Container)
 
