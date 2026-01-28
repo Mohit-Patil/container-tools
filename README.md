@@ -7,6 +7,7 @@ A Docker container bundling all major AI coding CLI tools into a single developm
 | Tool | Command | Authentication |
 |------|---------|----------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `claude`, `cc` | OAuth (Anthropic) |
+| [Cursor CLI](https://cursor.com) | `agent` | OAuth (Cursor) |
 | [OpenAI Codex](https://github.com/openai/codex) | `codex`, `cx` | ChatGPT / API Key |
 | [Aider](https://github.com/Aider-AI/aider) | `aider`, `ai` | API Keys |
 | [GitHub Copilot CLI](https://github.com/github/copilot-cli) | `ghcp` | GitHub OAuth |
@@ -41,6 +42,9 @@ gh auth login
 
 # Claude Code
 claude
+
+# Cursor CLI
+agent
 
 # Amazon Q
 q login
@@ -159,7 +163,7 @@ Different AI tools store credentials in different locations. We use separate nam
 
 | Volume | Container Path | Tools |
 |--------|----------------|-------|
-| `ai-cli-config` | `~/.config` | GitHub CLI, Gemini, Amazon Q |
+| `ai-cli-config` | `~/.config` | GitHub CLI, Gemini, Amazon Q, Cursor CLI (`~/.config/Cursor/`) |
 | `ai-cli-claude` | `~/.claude` | Claude Code |
 | `ai-cli-codex` | `~/.codex` | OpenAI Codex |
 | `ai-cli-aider` | `~/.aider` | Aider |

@@ -1,7 +1,7 @@
 # =============================================================================
 # AI CLI Tools Container
 # Base: Ubuntu 24.04 with full development environment
-# Includes: Claude Code, Codex, Aider, GitHub Copilot CLI, Gemini CLI, Amazon Q
+# Includes: Claude Code, Cursor CLI, Codex, Aider, GitHub Copilot CLI, Gemini CLI, Amazon Q
 # =============================================================================
 FROM ubuntu:24.04
 
@@ -111,9 +111,6 @@ RUN userdel -r ubuntu 2>/dev/null || true \
 # Layer 6: AI CLI Tools Installation (as root for global install)
 # =============================================================================
 
-# --- Claude Code (Anthropic) ---
-RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Claude Code installation skipped (install script failed)"
-
 # --- OpenAI Codex CLI ---
 RUN npm install -g @openai/codex || echo "Codex installation skipped (may not be available)"
 
@@ -164,6 +161,12 @@ RUN mkdir -p /home/${USERNAME}/.config \
 # Add local bin to PATH
 ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
+# --- Claude Code (Anthropic) ---
+RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Claude Code installation skipped (install script failed)"
+
+# --- Cursor CLI ---
+RUN curl https://cursor.com/install -fsS | bash || echo "Cursor CLI installation skipped (install script failed)"
+
 # =============================================================================
 # Layer 8: Copy configuration files
 # =============================================================================
@@ -190,6 +193,7 @@ RUN chmod +x /home/${USERNAME}/entrypoint.sh \
 #   - GitHub CLI: ~/.config/gh/
 #   - Aider: ~/.aider/ or ~/.config/aider/
 #   - Amazon Q: ~/.config/amazon-q/
+#   - Cursor CLI: ~/.config/Cursor/
 VOLUME ["/workspace", "/home/devuser/.claude", "/home/devuser/.codex", "/home/devuser/.config", "/home/devuser/.aider"]
 
 # Working directory
