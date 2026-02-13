@@ -1,18 +1,16 @@
 # AI CLI Tools Container
 
-A Docker container bundling all major AI coding CLI tools into a single development environment. Run Claude Code, Codex, Aider, and more from a container with your code mounted as a volume.
+A Docker container bundling AI coding CLI tools into a single development environment. Run Claude Code, OpenCode, Codex, and more from a container with your code mounted as a volume.
 
 ## Included Tools
 
 | Tool | Command | Authentication |
 |------|---------|----------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `claude`, `cc` | OAuth (Anthropic) |
+| [OpenCode](https://opencode.ai) | `opencode`, `oc` | OAuth |
 | [Cursor CLI](https://cursor.com) | `agent` | OAuth (Cursor) |
 | [OpenAI Codex](https://github.com/openai/codex) | `codex`, `cx` | ChatGPT / API Key |
-| [Aider](https://github.com/Aider-AI/aider) | `aider`, `ai` | API Keys |
 | [GitHub Copilot CLI](https://github.com/github/copilot-cli) | `ghcp` | GitHub OAuth |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `gemini`, `gem` | Google Account |
-| [Amazon Q](https://github.com/aws/amazon-q-developer-cli) | `q`, `qchat` | AWS Builder ID |
 | [GitHub CLI](https://cli.github.com/) | `gh` | GitHub OAuth |
 
 ## Quick Start
@@ -34,9 +32,6 @@ This mounts your current directory to `/workspace` inside the container.
 ### 3. Authenticate tools (inside container)
 
 ```bash
-# Show authentication help
-ai-login
-
 # GitHub (required for Copilot CLI)
 gh auth login
 
@@ -45,12 +40,6 @@ claude
 
 # Cursor CLI
 agent
-
-# Amazon Q
-q login
-
-# Gemini
-gemini
 ```
 
 ### 4. Start coding with AI
@@ -59,8 +48,8 @@ gemini
 # Use Claude Code
 claude "explain this codebase"
 
-# Use Aider
-aider --model sonnet
+# Use OpenCode
+opencode
 
 # Use Codex
 codex "write unit tests for this file"
@@ -140,18 +129,6 @@ docker run -it --rm \
   -v ai-cli-config:/home/devuser/.config \
   -v ai-cli-claude:/home/devuser/.claude \
   -v ai-cli-codex:/home/devuser/.codex \
-  -v ai-cli-aider:/home/devuser/.aider \
-  -v ~/.gitconfig:/home/devuser/.gitconfig:ro \
-  -v ~/.ssh:/home/devuser/.ssh:ro \
-  ai-cli-tools:latest
-
-# Run with specific directory
-docker run -it --rm \
-  -v /path/to/your/code:/workspace \
-  -v ai-cli-config:/home/devuser/.config \
-  -v ai-cli-claude:/home/devuser/.claude \
-  -v ai-cli-codex:/home/devuser/.codex \
-  -v ai-cli-aider:/home/devuser/.aider \
   -v ~/.gitconfig:/home/devuser/.gitconfig:ro \
   -v ~/.ssh:/home/devuser/.ssh:ro \
   ai-cli-tools:latest
@@ -163,14 +140,11 @@ Authentication tokens are stored in Docker named volumes that persist between co
 
 ### How It Works
 
-Different AI tools store credentials in different locations. We use separate named volumes for each:
-
 | Volume | Container Path | Tools |
 |--------|----------------|-------|
-| `ai-cli-config` | `~/.config` | GitHub CLI, Gemini, Amazon Q, Cursor CLI (`~/.config/Cursor/`) |
+| `ai-cli-config` | `~/.config` | GitHub CLI, Cursor CLI |
 | `ai-cli-claude` | `~/.claude` | Claude Code |
 | `ai-cli-codex` | `~/.codex` | OpenAI Codex |
-| `ai-cli-aider` | `~/.aider` | Aider |
 
 ### Credentials Shared Across Projects
 
@@ -180,20 +154,6 @@ Since volumes are managed by Docker (not tied to any project folder), your crede
 Project A (/Users/you/app1)     ─┐
 Project B (/Users/you/app2)      ├──► Same volumes ──► Same credentials
 Project C (/Users/you/backend)  ─┘
-```
-
-**Example:**
-```bash
-# First time - login once
-cd ~/projects/app1
-ai-container
-claude   # Login via OAuth
-# Exit
-
-# Later - different project, already authenticated
-cd ~/work/backend
-ai-container
-claude   # Already logged in!
 ```
 
 ### View Volumes
@@ -207,11 +167,9 @@ docker volume ls | grep ai-cli
 ```bash
 # Backup authentication data
 make backup-config
-# Creates: ai-cli-config-backup.tar.gz
 
 # Restore authentication data
 make restore-config
-# Restores from: ai-cli-config-backup.tar.gz
 ```
 
 ### Reset Authentication
@@ -233,47 +191,49 @@ The container automatically mounts your host's Git configuration and SSH keys (r
 - Git commits use your name and email from host
 - SSH keys work for git operations (GitHub, GitLab, etc.)
 - No need to configure git identity inside container
-- SSH agent forwarding works automatically
 
 **Note:** SSH keys are mounted read-only for security. If you need to generate new keys, do it on your host machine.
+
+## Testing Tools
+
+Smoke tests run automatically during `docker build` to verify all tools start:
+
+```bash
+# Tests run during build
+docker build -t ai-cli-tools:latest .
+
+# Run tests on a running container
+docker compose exec ai-tools ~/test-tools.sh
+```
+
+Tests verify: `claude`, `opencode`, `codex`, `cursor`, `gh`, `git`, `node` — each with a 10-second timeout.
 
 ## Helper Commands (Inside Container)
 
 | Command | Description |
 |---------|-------------|
 | `ai-tools` | List all available tools and aliases |
-| `ai-auth-status` | Check authentication status for all tools |
-| `ai-login` | Show authentication instructions |
+| `ai-auth-status` | Check authentication status |
 | `ai-check` | Check which tools are installed |
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and configure API keys:
+Copy `.env.example` to `.env` and configure:
 
 ```bash
 cp .env.example .env
 ```
 
-Key variables:
-
 | Variable | Description |
 |----------|-------------|
-| `ANTHROPIC_API_KEY` | For Aider with Claude models |
-| `OPENAI_API_KEY` | For Aider/Codex with OpenAI models |
+| `OPENAI_API_KEY` | For Codex with OpenAI models |
 | `GH_TOKEN` | For non-interactive GitHub auth |
-| `GOOGLE_API_KEY` | For Gemini CLI |
-
-Then run with:
-
-```bash
-make run-with-env
-```
 
 ## Project Structure
 
 ```
 container-tools/
-├── Dockerfile              # Container image definition
+├── Dockerfile              # Multi-stage container image (node:22-slim)
 ├── docker-compose.yml      # Docker Compose configuration
 ├── Makefile                # Build and run automation
 ├── .env.example            # Environment variable template
@@ -284,7 +244,9 @@ container-tools/
 ├── scripts/
 │   ├── entrypoint.sh      # Container entrypoint
 │   ├── aliases.sh         # Tool aliases and helpers
-│   └── welcome.sh         # Welcome banner
+│   ├── welcome.sh         # Welcome banner
+│   ├── test-tools.sh      # Smoke tests for all tools
+│   └── run-tests.sh       # Test runner helper
 └── config/
     └── bashrc             # Shell configuration
 ```
@@ -339,4 +301,3 @@ gh auth status
 ## License
 
 MIT License - feel free to use and modify as needed.
-

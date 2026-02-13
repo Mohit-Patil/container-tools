@@ -1,38 +1,35 @@
 #!/bin/bash
 # =============================================================================
 # Welcome message for AI CLI Tools Container
+# Only shown once per container lifecycle to avoid noise in nested shells/tmux
 # =============================================================================
 
-# Only show on interactive shells
-if [ -t 1 ]; then
-    echo ""
-    echo "========================================================================"
-    echo "                    AI CLI Tools Container"
-    echo "========================================================================"
-    echo ""
-    echo "  Available Tools:"
-    echo "    claude, cc    - Claude Code (Anthropic)"
-    echo "    agent         - Cursor CLI"
-    echo "    codex, cx     - OpenAI Codex CLI"
-    echo "    aider, ai     - AI Pair Programming"
-    echo "    ghcp          - GitHub Copilot CLI"
-    echo "    gemini, gem   - Google Gemini CLI"
-    echo "    q, qchat      - Amazon Q Developer CLI"
-    echo ""
-    echo "  Commands:"
-    echo "    ai-tools        - List all tools and aliases"
-    echo "    ai-auth-status  - Check authentication status"
-    echo "    ai-login        - Show authentication help"
-    echo "    ai-check        - Check which tools are installed"
-    echo ""
-    echo "  Workspace: /workspace (your project folder)"
-    echo ""
-    echo "  Credentials (persisted via Docker volumes):"
-    echo "    ~/.config  - GitHub CLI, Gemini, Amazon Q, Cursor CLI"
-    echo "    ~/.claude  - Claude Code"
-    echo "    ~/.codex   - OpenAI Codex"
-    echo "    ~/.aider   - Aider"
-    echo ""
-    echo "========================================================================"
-    echo ""
+WELCOME_SENTINEL="/tmp/.welcome-shown"
+
+if [ -t 1 ] && [ ! -f "$WELCOME_SENTINEL" ]; then
+    cat << 'EOF'
+
+========================================================================
+                    AI CLI Tools Container
+========================================================================
+
+  Available Tools:
+    claude, cc    - Claude Code (Anthropic)
+    opencode, oc  - OpenCode
+    agent         - Cursor CLI
+    codex, cx     - OpenAI Codex CLI
+    ghcp          - GitHub Copilot CLI
+
+  Commands:
+    ai-tools        - List all tools and aliases
+    ai-auth-status  - Check authentication status
+    ai-check        - Check which tools are installed
+
+  Workspace: /workspace (your project folder)
+
+  Run 'ai-check' to verify which tools are installed.
+========================================================================
+
+EOF
+    touch "$WELCOME_SENTINEL"
 fi

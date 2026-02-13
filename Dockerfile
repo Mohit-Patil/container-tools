@@ -1,156 +1,80 @@
 # =============================================================================
 # AI CLI Tools Container
-# Base: Ubuntu 24.04 with full development environment
-# Includes: Claude Code, Cursor CLI, Codex, Aider, GitHub Copilot CLI, Gemini CLI, Amazon Q
+# Runtime: node:22-slim (Debian bookworm)
+# Includes: Claude Code, OpenCode, Cursor CLI, Codex, GitHub Copilot CLI
 # =============================================================================
-FROM ubuntu:24.04
+FROM node:22-slim
 
 LABEL maintainer="container-tools"
-LABEL description="Multi-tool AI CLI container with Claude Code, Codex, Aider, and more"
-LABEL version="1.0.0"
+LABEL description="Multi-tool AI CLI container with Claude Code, OpenCode, Codex, and more"
+LABEL version="2.0.0"
 
-# Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
-# =============================================================================
-# Layer 1: System packages and build tools
-# =============================================================================
+# --- Runtime system packages ---
+# AI tools (Claude Code, OpenCode, etc.) shell out to grep, find, sed, etc.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Build essentials
-    build-essential \
-    gcc \
-    g++ \
-    make \
-    cmake \
-    # Version control
     git \
-    git-lfs \
-    # Editors and utilities
-    vim \
-    nano \
-    less \
-    tree \
-    htop \
-    # Network tools
     curl \
-    wget \
-    # Data processing
     jq \
-    # Archive tools
-    zip \
     unzip \
-    tar \
-    # Process management
-    tmux \
-    screen \
-    # SSL and security
+    less \
     ca-certificates \
     gnupg \
     openssh-client \
-    # Misc utilities
     sudo \
     locales \
-    tzdata \
+    # Required by AI CLI tools for code search/manipulation
+    grep \
+    findutils \
+    sed \
+    gawk \
+    coreutils \
+    diffutils \
+    procps \
+    && sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen \
+    && locale-gen \
     && rm -rf /var/lib/apt/lists/*
 
-# Set locale
-RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-# =============================================================================
-# Layer 2: Python installation (Python 3.12)
-# =============================================================================
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.12 \
-    python3.12-venv \
-    python3.12-dev \
-    python3-pip \
-    pipx \
-    && rm -rf /var/lib/apt/lists/* \
-    && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+# --- GitHub CLI (direct .deb install) ---
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://github.com/cli/cli/releases/latest/download/gh_$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep -oP '"tag_name":\s*"v\K[^"]+')_linux_${ARCH}.deb" -o /tmp/gh.deb \
+    && dpkg -i /tmp/gh.deb \
+    && rm -f /tmp/gh.deb
 
-# =============================================================================
-# Layer 3: Node.js installation (Node.js 22 LTS via NodeSource)
-# =============================================================================
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/* \
-    && npm install -g npm@latest
-
-# =============================================================================
-# Layer 4: GitHub CLI installation
-# =============================================================================
-RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-    && apt-get update \
-    && apt-get install -y gh \
-    && rm -rf /var/lib/apt/lists/*
-
-# =============================================================================
-# Layer 5: Create non-root user
-# =============================================================================
+# --- Create non-root user ---
 ARG USERNAME=devuser
 ARG USER_UID=1000
 ARG USER_GID=1000
 
-# Remove existing ubuntu user and create devuser
-# Ubuntu 24.04 comes with 'ubuntu' user at UID 1000
-RUN userdel -r ubuntu 2>/dev/null || true \
-    && groupdel ubuntu 2>/dev/null || true \
-    && groupadd --gid ${USER_GID} ${USERNAME} \
+# node:22-slim ships with a 'node' user at UID 1000 — remove it first
+RUN userdel -r node 2>/dev/null || true \
+    && groupdel node 2>/dev/null || true \
+    && groupadd --gid ${USER_GID} ${USERNAME} 2>/dev/null || true \
     && useradd --uid ${USER_UID} --gid ${USER_GID} -m -s /bin/bash ${USERNAME} \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME}
 
-# =============================================================================
-# Layer 6: AI CLI Tools Installation (as root for global install)
-# =============================================================================
+# --- npm-based AI tools (single layer, cache cleaned) ---
+RUN (npm install -g @openai/codex || true) \
+    && (npm install -g @githubnext/github-copilot-cli || true) \
+    && npm cache clean --force \
+    && rm -rf /root/.npm
 
-# --- OpenAI Codex CLI ---
-RUN npm install -g @openai/codex || echo "Codex installation skipped (may not be available)"
-
-# --- GitHub Copilot CLI ---
-RUN npm install -g @githubnext/github-copilot-cli || echo "GitHub Copilot CLI installation skipped"
-
-# --- Gemini CLI (Google) ---
-RUN npm install -g @anthropic-ai/gemini-cli || npm install -g gemini-cli || npm install -g @anthropic-ai/gemini-cli 2>/dev/null || echo "Gemini CLI installation skipped"
-
-# --- Aider (pip-based) ---
-# Use --ignore-installed to bypass system package conflicts
-RUN pip install --break-system-packages --ignore-installed packaging \
-    && pip install --break-system-packages aider-chat || echo "Aider installation skipped"
-
-# --- Amazon Q Developer CLI ---
-# Detect architecture and download appropriate binary
-RUN ARCH=$(dpkg --print-architecture) \
-    && if [ "$ARCH" = "amd64" ]; then \
-        cd /tmp \
-        && curl --proto '=https' --tlsv1.2 -sSf "https://desktop-release.q.us-east-1.amazonaws.com/latest/q-x86_64-linux.zip" -o "q.zip" \
-        && unzip -q q.zip \
-        && ./q/install.sh --install-dir /opt/amazon-q --bin-dir /usr/local/bin 2>/dev/null \
-        && rm -rf q.zip q/; \
-    else \
-        echo "Amazon Q: No ARM64 binary available, skipping"; \
-    fi || true
-
-# Give devuser ownership of global npm packages and binaries so tools can self-update
-# Note: Don't chown /usr/bin/sudo or it breaks sudo functionality
-RUN chown -R ${USER_UID}:${USER_GID} /usr/lib/node_modules \
-    && find /usr/bin -maxdepth 1 ! -name sudo -exec chown ${USER_UID}:${USER_GID} {} \; \
-    && chown ${USER_UID}:${USER_GID} /usr
+# Allow devuser to manage global npm packages for self-updates
+RUN chown -R ${USER_UID}:${USER_GID} /usr/local/lib/node_modules /usr/local/bin
 
 # =============================================================================
-# Layer 7: User configuration and setup
+# User setup and tool installation
 # =============================================================================
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}
 
-# Create necessary directories
 RUN mkdir -p /home/${USERNAME}/.config \
     /home/${USERNAME}/.local/bin \
     /home/${USERNAME}/.cache \
@@ -158,24 +82,30 @@ RUN mkdir -p /home/${USERNAME}/.config \
     /home/${USERNAME}/.codex \
     /home/${USERNAME}/.bashrc.d
 
-# Add local bin to PATH
 ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
-# --- Claude Code (Anthropic) ---
-RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Claude Code installation skipped (install script failed)"
+# --- Claude Code (native installer, binary moved outside ~/.claude volume) ---
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && mv ~/.claude/local ~/.claude-code \
+    && ln -sf ~/.claude-code/bin/claude ~/.local/bin/claude \
+    || echo "Claude Code installation skipped"
+
+# --- OpenCode (installer puts binary in ~/.opencode/bin/) ---
+RUN curl -fsSL https://opencode.ai/install | bash \
+    && ln -sf ~/.opencode/bin/opencode ~/.local/bin/opencode \
+    || echo "OpenCode installation skipped"
 
 # --- Cursor CLI ---
-RUN curl https://cursor.com/install -fsS | bash || echo "Cursor CLI installation skipped (install script failed)"
+RUN curl -fsSL https://cursor.com/install | bash || echo "Cursor CLI installation skipped"
 
 # =============================================================================
-# Layer 8: Copy configuration files
+# Configuration files
 # =============================================================================
 COPY --chown=${USERNAME}:${USERNAME} scripts/aliases.sh /home/${USERNAME}/.aliases.sh
 COPY --chown=${USERNAME}:${USERNAME} scripts/welcome.sh /home/${USERNAME}/.welcome.sh
 COPY --chown=${USERNAME}:${USERNAME} config/bashrc /home/${USERNAME}/.bashrc.d/ai-tools.sh
 COPY --chown=${USERNAME}:${USERNAME} scripts/entrypoint.sh /home/${USERNAME}/entrypoint.sh
 
-# Make scripts executable and update .bashrc
 RUN chmod +x /home/${USERNAME}/entrypoint.sh \
     && chmod +x /home/${USERNAME}/.aliases.sh \
     && chmod +x /home/${USERNAME}/.welcome.sh \
@@ -184,23 +114,14 @@ RUN chmod +x /home/${USERNAME}/entrypoint.sh \
     && echo '[ -f ~/.bashrc.d/ai-tools.sh ] && source ~/.bashrc.d/ai-tools.sh' >> /home/${USERNAME}/.bashrc
 
 # =============================================================================
-# Volume mount points
+# Smoke tests
 # =============================================================================
-# Mount points for code and persistent auth/config data
-# Different tools store credentials in different locations:
-#   - Claude Code: ~/.claude/
-#   - Codex: ~/.codex/
-#   - GitHub CLI: ~/.config/gh/
-#   - Aider: ~/.aider/ or ~/.config/aider/
-#   - Amazon Q: ~/.config/amazon-q/
-#   - Cursor CLI: ~/.config/Cursor/
-VOLUME ["/workspace", "/home/devuser/.claude", "/home/devuser/.codex", "/home/devuser/.config", "/home/devuser/.aider"]
+COPY --chown=${USERNAME}:${USERNAME} scripts/test-tools.sh /home/${USERNAME}/test-tools.sh
+RUN chmod +x /home/${USERNAME}/test-tools.sh \
+    && /home/${USERNAME}/test-tools.sh
 
-# Working directory
+# Working directory (volumes managed by docker-compose.yml)
 WORKDIR /workspace
 
-# =============================================================================
-# Entrypoint
-# =============================================================================
 ENTRYPOINT ["/home/devuser/entrypoint.sh"]
 CMD ["/bin/bash"]

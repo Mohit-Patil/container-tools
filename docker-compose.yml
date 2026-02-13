@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ai-tools:
     build:
@@ -14,13 +12,12 @@ services:
 
     # Volumes
     volumes:
-      # Mount current directory as workspace
-      - .:/workspace
-      # Named volumes for persistent auth (different tools use different locations)
+      # Mount current directory as workspace (:cached improves I/O on macOS)
+      - .:/workspace:cached
+      # Named volumes for persistent auth/config
       - ai-cli-config:/home/devuser/.config
       - ai-cli-claude:/home/devuser/.claude
       - ai-cli-codex:/home/devuser/.codex
-      - ai-cli-aider:/home/devuser/.aider
       # Mount git config and SSH keys from host
       - ~/.gitconfig:/home/devuser/.gitconfig:ro
       - ~/.ssh:/home/devuser/.ssh:ro
@@ -28,8 +25,12 @@ services:
     # Environment variables
     environment:
       - TERM=xterm-256color
+      - COLORTERM=truecolor
       - HOST_PWD=${PWD}
       - CLAUDE_CONFIG_DIR=/home/devuser/.claude
+      - XDG_CONFIG_HOME=/home/devuser/.config
+      - XDG_CACHE_HOME=/home/devuser/.cache
+      - XDG_DATA_HOME=/home/devuser/.local/share
 
     # Load environment from file (if exists)
     env_file:
@@ -49,5 +50,3 @@ volumes:
     name: ai-cli-claude
   ai-cli-codex:
     name: ai-cli-codex
-  ai-cli-aider:
-    name: ai-cli-aider
