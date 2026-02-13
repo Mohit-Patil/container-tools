@@ -1,9 +1,9 @@
 # =============================================================================
 # AI CLI Tools Container
-# Runtime: node:22-slim (Debian bookworm)
+# Runtime: ubuntu:24.04 (Noble Numbat)
 # Includes: Claude Code, OpenCode, Cursor CLI, Codex, GitHub Copilot CLI
 # =============================================================================
-FROM node:22-slim
+FROM ubuntu:24.04
 
 LABEL maintainer="container-tools"
 LABEL description="Multi-tool AI CLI container with Claude Code, OpenCode, Codex, and more"
@@ -12,8 +12,14 @@ LABEL version="2.0.0"
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
+# --- Node.js 22 via NodeSource ---
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
 # --- Runtime system packages ---
-# AI tools (Claude Code, OpenCode, etc.) shell out to grep, find, sed, etc.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
@@ -25,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     sudo \
     locales \
-    # Required by AI CLI tools for code search/manipulation
+    # Core utilities for AI CLI tools
     grep \
     findutils \
     sed \
@@ -33,13 +39,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     coreutils \
     diffutils \
     procps \
+    # Claude Code dependencies (system rg is faster than bundled)
+    ripgrep \
+    fzf \
+    fd-find \
+    # Common interactive shell utilities
+    vim \
+    tree \
     && sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen \
     && locale-gen \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/fdfind /usr/local/bin/fd
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
+# Use system ripgrep instead of bundled one (faster on large codebases)
+ENV USE_BUILTIN_RIPGREP=0
 
 # --- GitHub CLI (direct .deb install) ---
 RUN ARCH=$(dpkg --print-architecture) \
@@ -52,9 +68,9 @@ ARG USERNAME=devuser
 ARG USER_UID=1000
 ARG USER_GID=1000
 
-# node:22-slim ships with a 'node' user at UID 1000 — remove it first
-RUN userdel -r node 2>/dev/null || true \
-    && groupdel node 2>/dev/null || true \
+# Ubuntu 24.04 ships with an 'ubuntu' user at UID 1000 — remove it first
+RUN userdel -r ubuntu 2>/dev/null || true \
+    && groupdel ubuntu 2>/dev/null || true \
     && groupadd --gid ${USER_GID} ${USERNAME} 2>/dev/null || true \
     && useradd --uid ${USER_UID} --gid ${USER_GID} -m -s /bin/bash ${USERNAME} \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/${USERNAME} \
@@ -67,7 +83,8 @@ RUN (npm install -g @openai/codex || true) \
     && rm -rf /root/.npm
 
 # Allow devuser to manage global npm packages for self-updates
-RUN chown -R ${USER_UID}:${USER_GID} /usr/local/lib/node_modules /usr/local/bin
+RUN NPM_PREFIX=$(npm config get prefix) \
+    && chown -R ${USER_UID}:${USER_GID} ${NPM_PREFIX}/lib/node_modules ${NPM_PREFIX}/bin
 
 # =============================================================================
 # User setup and tool installation
