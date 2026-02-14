@@ -64,7 +64,15 @@ else
         -e TERM=xterm-256color \
         -e HOST_PWD="$WORKSPACE_DIR" \
         -e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
+        -e CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 \
         -e TMPDIR=/home/devuser/.claude/.tmp \
+        -p 3000:3000 \
+        -p 4000:4000 \
+        -p 5173:5173 \
+        -p 5174:5174 \
+        -p 8000:8000 \
+        -p 8080:8080 \
+        -p 8888:8888 \
         "$IMAGE_NAME" \
         tail -f /dev/null >/dev/null
 

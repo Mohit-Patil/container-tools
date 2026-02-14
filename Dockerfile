@@ -43,6 +43,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ripgrep \
     fzf \
     fd-find \
+    # Claude Code agent teams (split-pane mode)
+    tmux \
     # Common interactive shell utilities
     vim \
     tree \
@@ -56,6 +58,8 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 # Use system ripgrep instead of bundled one (faster on large codebases)
 ENV USE_BUILTIN_RIPGREP=0
+# Enable Claude Code agent teams (experimental)
+ENV CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 
 # --- GitHub CLI (direct .deb install) ---
 RUN ARCH=$(dpkg --print-architecture) \

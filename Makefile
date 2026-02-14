@@ -49,6 +49,7 @@ run:
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
+		-e CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 \
 		$(IMAGE_NAME):latest
 
 ## run-detached: Start container in detached mode
@@ -65,6 +66,7 @@ run-detached:
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
+		-e CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 \
 		$(IMAGE_NAME):latest \
 		tail -f /dev/null
 
@@ -91,6 +93,7 @@ run-with-env:
 		--env-file .env \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
+		-e CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 \
 		$(IMAGE_NAME):latest
 
 ## run-host-network: Run with host network (for OAuth callbacks)
@@ -108,6 +111,7 @@ run-host-network:
 		-e HOST_PWD="$(WORKSPACE_DIR)" \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
+		-e CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 \
 		$(IMAGE_NAME):latest
 
 # =============================================================================
@@ -164,6 +168,7 @@ dev:
 		-v "$$HOME/.ssh":/home/devuser/.ssh:ro \
 		-e TERM=xterm-256color \
 		-e CLAUDE_CONFIG_DIR=/home/devuser/.claude \
+		-e CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 \
 		$(IMAGE_NAME):latest
 
 ## exec: Execute a command in the running container (usage: make exec CMD="your command")

@@ -54,6 +54,7 @@ echo "=== Supporting Tools ==="
 test_tool "gh" "gh --version"
 test_tool "git" "git --version"
 test_tool "node" "node --version"
+test_tool "tmux" "tmux -V"
 
 echo ""
 echo "========================================================================"
